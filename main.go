@@ -86,13 +86,15 @@ import (
 )
 
 var (
+	defaultKeychainPath = appConfigFile("2fa", "keychain")
+
 	flagAdd      = flag.Bool("add", false, "add a key")
 	flagList     = flag.Bool("list", false, "list keys")
 	flagHotp     = flag.Bool("hotp", false, "add key as HOTP (counter-based) key")
 	flag7        = flag.Bool("7", false, "generate 7-digit code")
 	flag8        = flag.Bool("8", false, "generate 8-digit code")
 	flagClip     = flag.Bool("clip", false, "copy code to the clipboard")
-	flagKeychain = flag.String("keychain", "~/.2fa", "path to keychain")
+	flagKeychain = flag.String("keychain", defaultKeychainPath, "path to keychain")
 )
 
 func usage() {
@@ -111,12 +113,10 @@ func main() {
 	flag.Parse()
 
 	var k *Keychain
-	if *flagKeychain != "" {
-		k = readKeychain(*flagKeychain)
-	} else if os.Getenv("KEYCHAIN") != "" {
+	if os.Getenv("KEYCHAIN") != "" {
 		k = readKeychain(os.Getenv("KEYCHAIN"))
 	} else {
-		k = readKeychain(filepath.Join(os.Getenv("HOME"), ".2fa"))
+		k = readKeychain(*flagKeychain)
 	}
 
 	if *flagList {
@@ -306,6 +306,7 @@ func (c *Keychain) code(name string) (codeStr string, secondLeft int) {
 		code = totp(k.raw, now, k.digits)
 		secondLeft = 30 - (now.Second() % 30)
 	}
+	fmt.Fprintf(os.Stderr, "usage:\n")
 	codeStr = fmt.Sprintf("%0*d", k.digits, code)
 	return
 }
@@ -315,7 +316,8 @@ func (c *Keychain) show(name string) {
 	if *flagClip {
 		clipboard.WriteAll(code)
 	}
-	fmt.Printf("%10s - %02d second(s) left\n", code, secondLeft)
+	fmt.Fprintf(os.Stderr, "%02d second(s) left\n", secondLeft)
+	fmt.Printf("%10s\n", code)
 }
 
 func (c *Keychain) showAll() {
@@ -364,4 +366,42 @@ func hotp(key []byte, counter uint64, digits int) int {
 
 func totp(key []byte, t time.Time, digits int) int {
 	return hotp(key, uint64(t.UnixNano())/30e9, digits)
+}
+
+func appConfigFile(appName, fileName string) string {
+	dir, err := appConfigDir(appName)
+	if err != nil {
+		panic(err)
+	}
+	return filepath.Join(dir, fileName)
+}
+
+func appConfigDir(name string) (string, error) {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return dir, err
+	}
+	dir = filepath.Join(dir, name)
+	return dir, ensureDir(dir)
+}
+
+// ensureDir creates a dir at a given path if not existing, returning any
+// errors encountered during creation and whether a new dir was created
+func ensureDir(path string) error {
+	stat, err := os.Stat(path)
+	if err != nil {
+		// create dir if not exist
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(path, 0755); err == nil {
+				return nil
+			}
+		}
+		return err
+	}
+
+	if !stat.IsDir() {
+		return fmt.Errorf("path exists and is not a directory: %s", path)
+	}
+
+	return nil
 }
