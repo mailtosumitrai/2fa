@@ -306,7 +306,6 @@ func (c *Keychain) code(name string) (codeStr string, secondLeft int) {
 		code = totp(k.raw, now, k.digits)
 		secondLeft = 30 - (now.Second() % 30)
 	}
-	fmt.Fprintf(os.Stderr, "usage:\n")
 	codeStr = fmt.Sprintf("%0*d", k.digits, code)
 	return
 }
