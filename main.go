@@ -86,7 +86,7 @@ import (
 )
 
 var (
-	defaultKeychainPath = appConfigFile("2fa", "keychain")
+	defaultKeychainPath = filepath.Join(os.Getenv("HOME"), ".2fa")
 
 	flagAdd      = flag.Bool("add", false, "add a key")
 	flagList     = flag.Bool("list", false, "list keys")
@@ -365,14 +365,6 @@ func hotp(key []byte, counter uint64, digits int) int {
 
 func totp(key []byte, t time.Time, digits int) int {
 	return hotp(key, uint64(t.UnixNano())/30e9, digits)
-}
-
-func appConfigFile(appName, fileName string) string {
-	dir, err := appConfigDir(appName)
-	if err != nil {
-		panic(err)
-	}
-	return filepath.Join(dir, fileName)
 }
 
 func appConfigDir(name string) (string, error) {
