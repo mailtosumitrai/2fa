@@ -2,11 +2,11 @@
 
 Usage:
 
-    go get -u rsc.io/2fa
+    go get -u github.com/mailtosumitrai/2fa
 
     2fa -add [-7] [-8] [-hotp] name
     2fa -list
-    2fa name
+    2fa [-clip] [-less] keyname
 
 `2fa -add name` adds a new key to the 2fa keychain with the given name. It
 prints a prompt to standard error and reads a two-factor key from standard
@@ -48,14 +48,23 @@ Add it to 2fa under the name github, typing the secret at the prompt:
     2fa key for github: nzxxiidbebvwk6jb
     $
 
+Display all keys
+
+    $ 2fa
+    268346 | 19 second(s) left | github
+    $ 
+
 Then whenever GitHub prompts for a 2FA code, run 2fa to obtain one:
 
     $ 2fa github
-    268346
+    22 second(s) left
+        581590
     $
 
-Or to type less:
+Or to get only code and copy to clipboard:
 
-    $ 2fa
-    268346	github
-    $ 
+    $ 2fa -less -clip github
+    581590
+    $
+    
+
