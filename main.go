@@ -94,6 +94,7 @@ var (
 	flag7        = flag.Bool("7", false, "generate 7-digit code")
 	flag8        = flag.Bool("8", false, "generate 8-digit code")
 	flagClip     = flag.Bool("clip", false, "copy code to the clipboard")
+	flagLess     = flag.Bool("less", false, "get only code")
 	flagKeychain = flag.String("keychain", defaultKeychainPath, "path to keychain")
 )
 
@@ -101,7 +102,7 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "usage:\n")
 	fmt.Fprintf(os.Stderr, "\t2fa -add [-7] [-8] [-hotp] keyname\n")
 	fmt.Fprintf(os.Stderr, "\t2fa -list\n")
-	fmt.Fprintf(os.Stderr, "\t2fa [-clip] keyname\n")
+	fmt.Fprintf(os.Stderr, "\t2fa [-clip] [-less] keyname\n")
 	fmt.Fprintf(os.Stderr, "\n\t-keychain can be added to any command to specify path to keychain\n")
 	os.Exit(2)
 }
@@ -315,8 +316,12 @@ func (c *Keychain) show(name string) {
 	if *flagClip {
 		clipboard.WriteAll(code)
 	}
-	fmt.Fprintf(os.Stderr, "%02d second(s) left\n", secondLeft)
-	fmt.Printf("%10s\n", code)
+	if *flagLess {
+		fmt.Println(code)
+	} else {
+		fmt.Fprintf(os.Stderr, "%02d second(s) left\n", secondLeft)
+		fmt.Printf("%10s\n", code)
+	}
 }
 
 func (c *Keychain) showAll() {
