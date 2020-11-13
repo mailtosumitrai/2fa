@@ -1,4 +1,4 @@
-module github.com/bcicen/2fa
+module github.com/mailtosumitrai/2fa
 
 go 1.12
 
